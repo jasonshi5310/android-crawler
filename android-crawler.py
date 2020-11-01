@@ -8,7 +8,7 @@ import os
 # This function is inspired by has_class_but_no_id(tag)
 # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#a-function
 def has_data_version_added(tag):
-    return tag.name == 'div' and tag.has_attr('data-version-added')
+    return tag.has_attr('data-version-added') and tag.find('h3') != None
 
 # def has(tag):
 #     return tag.name == 'div' and tag.has_attr('data-version-deprecated')
@@ -18,28 +18,21 @@ def output(tag_list, dirPath, appURL):
     for tag in tag_list:
         name = tag.text
         url = appURL+name
-        # if name != 'Activity':
-        #     continue
         r = request.urlopen(url)
         source = r.read().decode('utf-8')
         file_soup = BeautifulSoup(source, 'html.parser')
-        # content = file_soup.find('div', id='jd-content')
+        # content = file_soup.find(id='jd-content')
         added_list = file_soup.find_all(has_data_version_added)
-        # print(len(deprecated_list))
-        # # print(len(content.find_all(has)))
+        # first = content.find(has_data_version_added)
         caution_list = []
         for de in added_list:
-            if de.find_all('p',class_='caution') != []:
+            if de.find_all('p','caution') != []:
                 caution_list.append(de)
-            elif de.find_all('p', class_='note') != []:
+            elif de.find_all('p','note') != []:
                 caution_list.append(de)
-        # print(len(caution_list))
-        # deprecated_list = file_soup.find_all(has)
-        # print(deprecated_list[-1])
-        # f = open(dirPath+name,'w')
-        # for i in deprecated_list:
-        #     f.write(i.string)
-        # f.close() 
+        if len(caution_list) > 0:
+            if caution_list[0].has_attr('id') and caution_list[0]['id'] == 'jd-content':
+                caution_list.pop(0)
         if len(caution_list) > 0:
             file = open(dirPath+name, 'w')
             result = ''
@@ -51,7 +44,7 @@ def output(tag_list, dirPath, appURL):
                     result += h3.text.strip() + ':'
                     for ca in c:
                         result += ca.text.strip() + '\n'
-                if n != []:
+                elif n != []:
                     result += h3.text.strip() + ':'
                     for note in n:
                         result += note.text.strip() + '\n'
